@@ -11,14 +11,17 @@ dotenv.config({
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.error(err));
 
 // Create an instance of the express app
 const app = express();
+
+// Parse JSON request bodies
+app.use(express.json()); 
 
 // Require the User model
 const User = require('./models/User');
@@ -35,14 +38,14 @@ app.get('/users', async (req, res) => {
 });
 
 // POST a new user
-app.post('/users', async (req, res) => {
-  const { name, email } = req.body;
-  const user = new User({ name, email });
+app.post("/users", async (req, res) => {
   try {
-    await user.save();
-    res.status(201).json(user);
+    const {name, email, age} = req.body;
+    const user = await User.create({name, email, age});
+    res.json(user);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -51,7 +54,7 @@ app.put('/users/:id', async (req, res) => {
   const { id } = req.params;
   const { name, email } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(id, { name, email }, { new: true });
+    const user = await User.findByIdAndUpdate(id, { name, email}, { new: true });
     res.json(user);
   } catch (error) {
     res.status(400).json({ message: error.message });
